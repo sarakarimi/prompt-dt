@@ -227,7 +227,7 @@ class PromptSequenceTrainer:
         return logs
 
  
-    def save_model(self, env_name, postfix, folder):
-        model_name = '/prompt_model_' + env_name + postfix
+    def save_model(self, env_name, postfix, folder, seed):
+        model_name = '/prompt_model_' + env_name + postfix + '_seed_' + str(seed)
         torch.save(self.model.state_dict(),folder+model_name)  # model save
         print('model saved to ', folder+model_name)
