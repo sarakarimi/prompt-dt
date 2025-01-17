@@ -1,0 +1,7 @@
+**/data/
+**/wandb/
+**/model_saved/
+**/log/
+**__
+**egg-info
+.idea
