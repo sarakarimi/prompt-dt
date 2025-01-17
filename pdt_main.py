@@ -21,12 +21,19 @@ from prompt_dt.prompt_utils import eval_episodes
 from collections import namedtuple
 import json, pickle, os
 
+
 def experiment_mix_env(
         exp_prefix,
         variant,
 ):
     device = variant['device']
     log_to_wandb = variant['log_to_wandb']
+    seed = variant['seed']
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
 
     ######
     # construct train and test environments
@@ -54,9 +61,9 @@ def experiment_mix_env(
     for task_ind in task_config.test_tasks:
         test_env_name_list.append(args.env +'-'+ str(task_ind))
     # training envs
-    info, env_list = get_env_list(train_env_name_list, config_save_path, device)
+    info, env_list = get_env_list(train_env_name_list, config_save_path, device, seed)
     # testing envs
-    test_info, test_env_list = get_env_list(test_env_name_list, config_save_path, device)
+    test_info, test_env_list = get_env_list(test_env_name_list, config_save_path, device, seed)
 
     print(f'Env Info: {info} \n\n Test Env Info: {test_info}\n\n\n')
     print(f'Env List: {env_list} \n\n Test Env List: {test_env_list}')
@@ -239,6 +246,8 @@ if __name__ == '__main__':
     parser.add_argument('--test_dataset_mode', type=str, default='expert')
     parser.add_argument('--train_prompt_mode', type=str, default='expert')
     parser.add_argument('--test_prompt_mode', type=str, default='expert')
+    parser.add_argument('--seed', type=int, default=1)
+
 
     parser.add_argument('--prompt-episode', type=int, default=1)
     parser.add_argument('--prompt-length', type=int, default=5)

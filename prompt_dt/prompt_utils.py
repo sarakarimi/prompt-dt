@@ -15,7 +15,7 @@ from mujoco_control_envs.mujoco_control_envs import HalfCheetahDirEnv, HalfCheet
 
 """ constructing envs """
 
-def gen_env(env_name, config_save_path):
+def gen_env(env_name, config_save_path, seed):
     if 'cheetah_dir' in env_name:
         if '0' in env_name:
             env = HalfCheetahDirEnv([{'direction': 1}], include_goal = False)
@@ -33,6 +33,7 @@ def gen_env(env_name, config_save_path):
             assert len(task_info) == 1, f'Unexpected task info: {task_info}'
             tasks.append(task_info[0])
         env = HalfCheetahVelEnv(tasks, include_goal = False)
+        env.seed(seed=seed)
         max_ep_len = 200
         env_targets = [0]
         scale = 500.
@@ -63,13 +64,13 @@ def gen_env(env_name, config_save_path):
     return env, max_ep_len, env_targets, scale
 
 
-def get_env_list(env_name_list, config_save_path, device):
+def get_env_list(env_name_list, config_save_path, device, seed):
     info = {} # store all the attributes for each env
     env_list = []
     
     for env_name in env_name_list:
         info[env_name] = {}
-        env, max_ep_len, env_targets, scale = gen_env(env_name=env_name, config_save_path=config_save_path)
+        env, max_ep_len, env_targets, scale = gen_env(env_name=env_name, config_save_path=config_save_path, seed=seed)
         info[env_name]['max_ep_len'] = max_ep_len
         info[env_name]['env_targets'] = env_targets
         info[env_name]['scale'] = scale
