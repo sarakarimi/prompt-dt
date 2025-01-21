@@ -5,6 +5,8 @@ import numpy as np
 import torch
 import time
 from wandb import env
+
+from .prompt_tuning_bandit import prompt_tuning_bandit
 from .prompt_utils import flatten_prompt
 import copy
 
@@ -226,7 +228,46 @@ class PromptSequenceTrainer:
 
         return logs
 
- 
+    def bandit_evaluation_multienv(self, get_prompt, prompt_trajectories_list, eval_episodes, env_name_list, info,
+                                variant, env_list, iter_num=0, print_logs=False, no_prompt=False, group='test', wandb=None):
+        print('evaluate at tasks: ', env_name_list)
+        logs = dict()
+        print('start evaluating...')
+        self.model.eval()
+
+        eval_start = time.time()
+        for env_id, env_name in enumerate(env_name_list):
+            print('evaluate at task: ', env_name)
+
+            # need to sample eval_fn and prompt together
+            # self.eval_fns = [eval_episodes(tar, info[env_name], variant, env_list[env_id], env_name) for tar in
+            #                  info[env_name]['env_targets']]
+            mab_results, mab_logs = prompt_tuning_bandit(self.model, prompt_trajectories_list[env_id], env_list[env_id], info[env_name], variant, env_name, wandb)
+        #     self.get_prompt = get_prompt(prompt_trajectories_list[env_id], info[env_name], variant ) #, mab_results)
+        #     if not no_prompt:
+        #         self.prompt = flatten_prompt(self.get_prompt(), batch_size=1)
+        #         # prompt_states, prompt_actions, prompt_rewards, prompt_dones, prompt_returns_to_go, prompt_timesteps, prompt_attention_mask = self.prompt
+        #         # print('======get trainer.prompt', prompt_states.shape)
+        #     else:
+        #         self.prompt = None
+        #     for eval_fn in self.eval_fns:
+        #         # print('env_name : ', env_list[env_id])
+        #         outputs = eval_fn(self.model, prompt=self.prompt)
+        #         for k, v in outputs.items():
+        #             logs[f'{group}-evaluation/{k}'] = v
+        #
+        # logs['time/evaluation'] = time.time() - eval_start
+        #
+        # for k in self.diagnostics:
+        #     logs[k] = self.diagnostics[k]
+        #
+        # if print_logs:
+        #     print('=' * 80)
+        #     print(f'Iteration {iter_num}')
+        #     for k, v in logs.items():
+        #         print(f'{k}: {v}')
+        return logs
+
     def save_model(self, env_name, postfix, folder, seed):
         model_name = '/prompt_model_' + env_name + postfix + '_seed_' + str(seed)
         torch.save(self.model.state_dict(),folder+model_name)  # model save

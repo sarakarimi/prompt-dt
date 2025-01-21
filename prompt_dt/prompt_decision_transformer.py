@@ -53,7 +53,7 @@ class PromptDecisionTransformer(nn.Module):
         )
         self.predict_return = torch.nn.Linear(hidden_size, 1)
 
-    def forward(self, states, actions, rewards, returns_to_go, timesteps, attention_mask=None, prompt=None):
+    def forward(self, states, actions, rewards, returns_to_go, timesteps, attention_mask=None, prompt=None, features=False):
         batch_size, seq_length = states.shape[0], states.shape[1]
         if attention_mask is None:
             # attention mask for GPT: 1 if can be attended to, 0 if not
@@ -135,6 +135,12 @@ class PromptDecisionTransformer(nn.Module):
         return_preds = self.predict_return(x[:,2])[:, -seq_length:, :]  # predict next return given state and action
         state_preds = self.predict_state(x[:,2])[:, -seq_length:, :]    # predict next state given state and action
         action_preds = self.predict_action(x[:,1])[:, -seq_length:, :]  # predict next action given state
+
+        if features:
+            rtg_tokens_repr = x[:, 0, :, :]
+            state_tokens_repr = x[:, 1, :, :]
+            action_tokens_repr = x[:, 2, :, :]
+            return state_preds, action_preds, return_preds, rtg_tokens_repr, state_tokens_repr, action_tokens_repr
 
         return state_preds, action_preds, return_preds
 

@@ -96,7 +96,7 @@ def flatten_prompt(prompt, batch_size):
     return p_s, p_a, p_r, p_d, p_rtg, p_timesteps, p_mask
 
 
-def get_prompt(prompt_trajectories, info, variant):
+def get_prompt(prompt_trajectories, info, variant, mab_results=None):
     num_trajectories, p_sample, sorted_inds = info['num_trajectories'], info['p_sample'], info['sorted_inds']
     max_ep_len, state_mean, state_std, scale = info['max_ep_len'], info['state_mean'], info['state_std'], info['scale']
     state_dim, act_dim, device = info['state_dim'], info['act_dim'], info['device']
@@ -113,6 +113,7 @@ def get_prompt(prompt_trajectories, info, variant):
 
         s, a, r, d, rtg, timesteps, mask = [], [], [], [], [], [], []
         for i in range(int(num_episodes*sample_size)):
+            # print("the value of J is", num_episodes*sample_size)
             if variant["stochastic_prompt"]:
                 traj = prompt_trajectories[int(batch_inds[i])] # random select traj
             else:
@@ -155,55 +156,8 @@ def get_prompt(prompt_trajectories, info, variant):
         rtg = torch.from_numpy(np.concatenate(rtg, axis=0)).to(dtype=torch.float32, device=device)
         timesteps = torch.from_numpy(np.concatenate(timesteps, axis=0)).to(dtype=torch.long, device=device)
         mask = torch.from_numpy(np.concatenate(mask, axis=0)).to(device=device)
+        # print(s.shape)
         return s, a, r, d, rtg, timesteps, mask
-
-    def bandit_fn(sample_size=1):
-        # random sample prompts with fixed length (prompt-length) in num episodes (prompt-episode)
-        batch_inds = None # replace with bandit choice!
-
-        s, a, r, d, rtg, timesteps, mask = [], [], [], [], [], [], []
-        for i in range(int(num_episodes * sample_size)):
-            traj = prompt_trajectories[int(batch_inds[i])]  # random select traj
-
-            si = max(0, traj['rewards'].shape[0] - max_len - 1)  # select the last traj with length max_len
-
-            # get sequences from dataset
-            s.append(traj['observations'][si:si + max_len].reshape(1, -1, state_dim))
-            a.append(traj['actions'][si:si + max_len].reshape(1, -1, act_dim))
-            r.append(traj['rewards'][si:si + max_len].reshape(1, -1, 1))
-            if 'terminals' in traj:
-                d.append(traj['terminals'][si:si + max_len].reshape(1, -1))
-            else:
-                d.append(traj['dones'][si:si + max_len].reshape(1, -1))
-            timesteps.append(np.arange(si, si + s[-1].shape[1]).reshape(1, -1))
-            timesteps[-1][timesteps[-1] >= max_ep_len] = max_ep_len - 1  # padding cutoff
-            rtg.append(discount_cumsum(traj['rewards'][si:], gamma=1.)[:s[-1].shape[1] + 1].reshape(1, -1, 1))
-            if rtg[-1].shape[1] <= s[-1].shape[1]:
-                rtg[-1] = np.concatenate([rtg[-1], np.zeros((1, 1, 1))], axis=1)
-
-            # padding and state + reward normalization
-            tlen = s[-1].shape[1]
-            # if tlen !=args.K:
-            #     print('tlen not equal to k')
-            s[-1] = np.concatenate([np.zeros((1, max_len - tlen, state_dim)), s[-1]], axis=1)
-            if not variant['no_state_normalize']:
-                s[-1] = (s[-1] - state_mean) / state_std
-            a[-1] = np.concatenate([np.ones((1, max_len - tlen, act_dim)) * -10., a[-1]], axis=1)
-            r[-1] = np.concatenate([np.zeros((1, max_len - tlen, 1)), r[-1]], axis=1)
-            d[-1] = np.concatenate([np.ones((1, max_len - tlen)) * 2, d[-1]], axis=1)
-            rtg[-1] = np.concatenate([np.zeros((1, max_len - tlen, 1)), rtg[-1]], axis=1) / scale
-            timesteps[-1] = np.concatenate([np.zeros((1, max_len - tlen)), timesteps[-1]], axis=1)
-            mask.append(np.concatenate([np.zeros((1, max_len - tlen)), np.ones((1, tlen))], axis=1))
-
-        s = torch.from_numpy(np.concatenate(s, axis=0)).to(dtype=torch.float32, device=device)
-        a = torch.from_numpy(np.concatenate(a, axis=0)).to(dtype=torch.float32, device=device)
-        r = torch.from_numpy(np.concatenate(r, axis=0)).to(dtype=torch.float32, device=device)
-        d = torch.from_numpy(np.concatenate(d, axis=0)).to(dtype=torch.long, device=device)
-        rtg = torch.from_numpy(np.concatenate(rtg, axis=0)).to(dtype=torch.float32, device=device)
-        timesteps = torch.from_numpy(np.concatenate(timesteps, axis=0)).to(dtype=torch.long, device=device)
-        mask = torch.from_numpy(np.concatenate(mask, axis=0)).to(device=device)
-        return s, a, r, d, rtg, timesteps, mask
-
     return fn
 
 
@@ -513,6 +467,7 @@ def eval_episodes(target_rew, info, variant, env, env_name):
                     no_state_normalize=variant['no_state_normalize']                
                     )
             returns.append(ret)
+            print("returns:", ret)
         return {
             f'{env_name}_target_{target_rew}_return_mean': np.mean(returns),
             f'{env_name}_target_{target_rew}_return_std': np.std(returns),
