@@ -467,7 +467,6 @@ def eval_episodes(target_rew, info, variant, env, env_name):
                     no_state_normalize=variant['no_state_normalize']                
                     )
             returns.append(ret)
-            print("returns:", ret)
         return {
             f'{env_name}_target_{target_rew}_return_mean': np.mean(returns),
             f'{env_name}_target_{target_rew}_return_std': np.std(returns),
