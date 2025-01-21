@@ -1,14 +1,9 @@
-import argparse
-import os
+
 import random
-from datetime import datetime
 import numpy as np
-import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from mujoco_control_envs.mujoco_control_envs import HalfCheetahDirEnv, HalfCheetahVelEnv, AntDirEnv
-
 from prompt_dt.prompt_evaluate_episodes import prompt_evaluate_episode_rtg
 from prompt_dt.prompt_utils import discount_cumsum
 
