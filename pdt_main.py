@@ -225,8 +225,7 @@ def experiment_mix_env(
             if log_to_wandb:
                 wandb.log(outputs)
 
-        trainer.save_model(env_name=args.env, postfix=model_post_fix + '_iter_' + str(iter), folder=save_path,
-                           seed=seed)
+        trainer.save_model(env_name=args.env, postfix=model_post_fix + '_iter_' + str(iter), folder=save_path)
 
     else:
         ####
@@ -344,22 +343,22 @@ if __name__ == '__main__':
     parser.add_argument('--save-interval', type=int, default=500)
 
     args = parser.parse_args()
-    pdt_model_paths = [
-        "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-1-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-        "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-2-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-        "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-3-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-        # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-4-347514/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-        # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-5-753159/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999"
-    ]
-    # TODO run everything again with this uncommented
-    # args.bandit-use-transformer-features = False
-
-    for path in pdt_model_paths:
-        args.load_path = path
     if args.evaluation and args.prompt_tune:
-        for seed in [11, 12, 13]:
-            args.seed = seed
-            experiment_mix_env('gym-experiment', variant=vars(args))
+        pdt_model_paths = [
+            "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-1-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-2-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-3-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-4-347514/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-5-753159/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999"
+        ]
+        # TODO run everything again with this uncommented
+        # args.bandit-use-transformer-features = False
+    
+        for path in pdt_model_paths:
+            args.load_path = path
+            for seed in [11, 12, 13]:
+                args.seed = seed
+                experiment_mix_env('gym-experiment', variant=vars(args))
     else:
         experiment_mix_env('gym-experiment', variant=vars(args))
 
