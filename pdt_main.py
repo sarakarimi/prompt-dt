@@ -26,7 +26,6 @@ def experiment_mix_env(
         exp_prefix,
         variant,
 ):
-    print(torch.cuda.list)
     device = variant['device']
     log_to_wandb = variant['log_to_wandb']
     seed = variant['seed']
