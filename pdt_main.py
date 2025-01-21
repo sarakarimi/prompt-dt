@@ -26,6 +26,7 @@ def experiment_mix_env(
         exp_prefix,
         variant,
 ):
+    print(torch.cuda.list)
     device = variant['device']
     log_to_wandb = variant['log_to_wandb']
     seed = variant['seed']
@@ -217,8 +218,7 @@ def experiment_mix_env(
                 trainer.save_model(
                     env_name=args.env,
                     postfix=model_post_fix + '_iter_' + str(iter),
-                    folder=save_path,
-                    seed=seed)
+                    folder=save_path)
 
             outputs.update({"global_step": iter})  # set global step as iteration
 
@@ -353,7 +353,7 @@ if __name__ == '__main__':
         ]
         # TODO run everything again with this uncommented
         # args.bandit-use-transformer-features = False
-    
+
         for path in pdt_model_paths:
             args.load_path = path
             for seed in [11, 12, 13]:
