@@ -363,7 +363,7 @@ def prompt_tuning_bandit(model, prompt_trajectory, env, info, variant, env_name,
 
     # params
     eval_batch_size = 1
-    num_rollouts = 250
+    num_rollouts = 500 #250
     epsilon = 1.0
     # decay epsilon over the first 20% of num_rollouts to zero
     epsilon_decay = 1.0 / (num_rollouts * 0.2)

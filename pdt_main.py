@@ -110,7 +110,7 @@ def experiment_mix_env(
     num_env = len(train_env_name_list)
     group_name = f'{exp_prefix}-{str(num_env)}-Env-{dataset_mode}'
     # exp_prefix = f'{group_name}-{random.randint(int(1e5), int(1e6) - 1)}'
-    exp_prefix = f'{group_name}-seed-{seed}-J-{args.prompt_episode}-H-{args.prompt_length}-{random.randint(int(1e5), int(1e6) - 1)}'
+    exp_prefix = f'{group_name}-seed-{seed}-J-{args.prompt_episode}-H-{args.prompt_length}-{random.randint(int(1e5), int(1e6) - 1)}-new'
 
     state_dim = test_env_list[0].observation_space.shape[0]
     act_dim = test_env_list[0].action_space.shape[0]
@@ -130,6 +130,7 @@ def experiment_mix_env(
         attn_pdrop=variant['dropout'],
     )
     model = model.to(device=device)
+
 
     warmup_steps = variant['warmup_steps']
     optimizer = torch.optim.AdamW(
@@ -232,32 +233,52 @@ def experiment_mix_env(
         ####
 
         saved_model_path = variant['load_path']  # os.path.join(save_path, variant['load_path'])
-        model.load_state_dict(torch.load(saved_model_path))
+        print(saved_model_path)
+        model.load_state_dict(torch.load(saved_model_path, map_location="cuda:0"))
         print('model initialized from: ', saved_model_path)
 
         if not args.finetune:
-            if log_to_wandb:
-                model_seed = saved_model_path.split('-')[8]
-                exp_prefix = f'{group_name}-seed-{model_seed}-J-{args.prompt_episode}-H-{args.prompt_length}-{random.randint(int(1e5), int(1e6) - 1)}-bandit-seed-{seed}-feature-{args.bandit_use_transformer_features}'
-                wandb.init()
-                wandb.init(
-                    name=exp_prefix,
-                    group=group_name,
-                    project='prompt-decision-transformer',
-                    config=variant,
-                    reinit=True,
-
-                )
 
             if not args.prompt_tune:
                 """ MODEL EVALUATION"""
-                eval_iter_num = int(saved_model_path.split('_')[-1])
-                eval_logs = trainer.eval_iteration_multienv(
-                    get_prompt, test_prompt_trajectories_list,
-                    eval_episodes, test_env_name_list, test_info, variant, test_env_list, iter_num=eval_iter_num,
-                    print_logs=True, no_prompt=args.no_prompt, group='eval')
+                if log_to_wandb:
+                    model_seed = saved_model_path.split('-')[8]
+                    exp_prefix = f'{group_name}-seed-{model_seed}-J-{args.prompt_episode}-H-{args.prompt_length}-{random.randint(int(1e5), int(1e6) - 1)}-eval-{seed}'
+                    wandb.init()
+                    wandb.init(
+                        name=exp_prefix,
+                        group=group_name,
+                        project='prompt-decision-transformer',
+                        config=variant,
+                        reinit=True,
+                    )
+                for iter in range(250):
+                    eval_iter_num = int(saved_model_path.split('_')[-1])
+                    eval_logs = trainer.eval_iteration_multienv(
+                        get_prompt, test_prompt_trajectories_list,
+                        eval_episodes, test_env_name_list, test_info, variant, test_env_list, iter_num=eval_iter_num,
+                        print_logs=True, no_prompt=args.no_prompt, group='eval')
+                    outputs = eval_logs
+                    outputs.update({"global_step": iter})  # set global step as iteration
+
+                    if log_to_wandb:
+                        wandb.log(outputs)
+
             else:
                 """ MODEL BANDIT TRAINING"""
+                if log_to_wandb:
+                    model_seed = saved_model_path.split('-')[8]
+                    exp_prefix = f'{group_name}-seed-{model_seed}-J-{args.prompt_episode}-H-{args.prompt_length}-{random.randint(int(1e5), int(1e6) - 1)}-bandit-seed-{seed}-feature-{args.bandit_use_transformer_features}'
+                    wandb.init()
+                    wandb.init(
+                        name=exp_prefix,
+                        group=group_name,
+                        project='prompt-decision-transformer',
+                        config=variant,
+                        reinit=True,
+
+                    )
+
                 eval_iter_num = int(saved_model_path.split('_')[-1])
                 eval_logs = trainer.bandit_evaluation_multienv(
                     get_prompt, test_prompt_trajectories_list,
@@ -267,16 +288,20 @@ def experiment_mix_env(
 
         else:
             """ MODEL FINE-TUNING """
-            exp_prefix = f'{group_name}-seed-1-{random.randint(int(1e5), int(1e6) - 1)}-finetune-{seed}'
+            # exp_prefix = f'{group_name}-seed-1-{random.randint(int(1e5), int(1e6) - 1)}-finetune-{seed}'
+            model_seed = saved_model_path.split('-')[8]
+            exp_prefix = f'{group_name}-seed-{model_seed}-J-{args.prompt_episode}-H-{args.prompt_length}-{random.randint(int(1e5), int(1e6) - 1)}-finetune-seed-{seed}'
+
             if log_to_wandb:
                 wandb.init(
                     name=exp_prefix,
                     group=group_name,
                     project='prompt-decision-transformer',
-                    config=variant
+                    config=variant,
+                    reinit=True,
                 )
                 save_path += wandb.run.name
-                os.mkdir(save_path)
+                # os.mkdir(save_path)
             model_post_fix = '_TRAIN_' + variant['train_prompt_mode'] + '_TEST_' + variant['test_prompt_mode']
             model_post_fix += '_FINETUNE'
 
@@ -292,8 +317,10 @@ def experiment_mix_env(
 
                 if log_to_wandb:
                     wandb.log(outputs)
-                if iter % 50 == 0:
-                    trainer.save_model(env_name=args.env, postfix=model_post_fix + '_iter_' + str(iter), folder=save_path)
+                # if iter % 50 == 0:
+                #     trainer.save_model(env_name=args.env, postfix=model_post_fix + '_iter_' + str(iter), folder=save_path)
+
+            wandb.finish()
 
 
 if __name__ == '__main__':
@@ -312,17 +339,17 @@ if __name__ == '__main__':
     parser.add_argument('--no-prompt', action='store_true', default=False)
     parser.add_argument('--no-r', action='store_true', default=False)
     parser.add_argument('--no-rtg', action='store_true', default=False)
-    parser.add_argument('--prompt-tune', action='store_true', default=True)
-    parser.add_argument('--bandit-use-transformer-features', action='store_true', default=True)
-    parser.add_argument('--num_traj_prompt_j', type=int, default=2)
+    parser.add_argument('--prompt-tune', action='store_true', default=False)
+    parser.add_argument('--bandit-use-transformer-features', action='store_true', default=False)
+    parser.add_argument('--num_traj_prompt_j', type=int, default=20)
     parser.add_argument('--finetune', action='store_true', default=False)
-    parser.add_argument('--finetune_steps', type=int, default=1000)
-    parser.add_argument('--finetune_batch_size', type=int, default=16)
+    parser.add_argument('--finetune_steps', type=int, default=10)
+    parser.add_argument('--finetune_batch_size', type=int, default=256)
     parser.add_argument('--finetune_opt', action='store_true', default=True)
     parser.add_argument('--finetune_lr', type=float, default=1e-4)
     parser.add_argument('--no_state_normalize', action='store_true', default=False)
     parser.add_argument('--average_state_mean', action='store_true', default=True)
-    parser.add_argument('--evaluation', action='store_true', default=True)
+    parser.add_argument('--evaluation', action='store_true', default=False)
     parser.add_argument('--render', action='store_true', default=False)
     parser.add_argument('--load-path', type=str, default=None)  # choose a model when in evaluation mode
 
@@ -338,7 +365,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', '-lr', type=float, default=1e-4)
     parser.add_argument('--weight_decay', '-wd', type=float, default=1e-4)
     parser.add_argument('--warmup_steps', type=int, default=10000)  # 10000*(number of environments)
-    parser.add_argument('--num_eval_episodes', type=int, default=50)
+    parser.add_argument('--num_eval_episodes', type=int, default=1)
     parser.add_argument('--max_iters', type=int, default=5000)
     parser.add_argument('--num_steps_per_iter', type=int, default=10)
     parser.add_argument('--device', type=str, default='cuda')
@@ -348,19 +375,22 @@ if __name__ == '__main__':
     parser.add_argument('--save-interval', type=int, default=500)
 
     args = parser.parse_args()
-    if args.evaluation and args.prompt_tune:
+    if args.evaluation: #and args.prompt_tune:
         pdt_model_paths = [
-            "/home/sara_karimi/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-1-J-2-H-20-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-            "/home/sara_karimi/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-2-J-2-H-20-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-            # "/home/sara_karimi/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-3-J-2-H-20-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-1-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-2-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-3-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-1-J-2-H-20-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-2-J-2-H-20-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-3-J-2-H-20-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999"
             ]
 
-        for item in [True, False]:
-            args.bandit_use_transformer_features = item
-            for path in pdt_model_paths:
-                args.load_path = path
-                for seed in [11, 12, 13]:
-                    args.seed = seed
-                    experiment_mix_env('gym-experiment', variant=vars(args))
+        # for item in [True, False]:
+        # args.bandit_use_transformer_features = True
+        for path in pdt_model_paths:
+            args.load_path = path
+            for seed in [11, 12, 13]:
+                args.seed = seed
+                experiment_mix_env('gym-experiment', variant=vars(args))
     else:
         experiment_mix_env('gym-experiment', variant=vars(args))
