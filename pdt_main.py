@@ -342,15 +342,15 @@ if __name__ == '__main__':
     parser.add_argument('--test_prompt_mode', type=str, default='expert')
     parser.add_argument('--seed', type=int, default=1)
 
-    parser.add_argument('--prompt-episode', type=int, default=1)
-    parser.add_argument('--prompt-length', type=int, default=5)
+    parser.add_argument('--prompt-episode', type=int, default=2)
+    parser.add_argument('--prompt-length', type=int, default=20)
     parser.add_argument('--stochastic-prompt', action='store_true', default=True)
     parser.add_argument('--no-prompt', action='store_true', default=False)
     parser.add_argument('--no-r', action='store_true', default=False)
     parser.add_argument('--no-rtg', action='store_true', default=False)
     parser.add_argument('--prompt-tune', action='store_true', default=True)
     parser.add_argument('--bandit-use-transformer-features', action='store_true', default=False)
-    parser.add_argument('--num_traj_prompt_j', type=int, default=1)
+    parser.add_argument('--num_traj_prompt_j', type=int, default=2)
     parser.add_argument('--finetune', action='store_true', default=False)
     parser.add_argument('--finetune_steps', type=int, default=10)
     parser.add_argument('--finetune_batch_size', type=int, default=256)
@@ -392,12 +392,12 @@ if __name__ == '__main__':
             # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-1-J-2-H-20-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
             # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-2-J-2-H-20-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
             # "/home/sara/PycharmProjects/prompt-dt/model_saved/gym-experiment-cheetah_vel-35-Env-expert-seed-3-J-2-H-20-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999"
-            "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-1-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-            "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-2-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-            "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-3-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-            # "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-1-J-2-H-20-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-            # "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-2-J-2-H-20-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
-            # "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-3-J-2-H-20-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999"
+            # "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-1-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            # "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-2-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            # "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-3-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-1-J-2-H-20-240891/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-2-J-2-H-20-990298/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999",
+            "/home/sara_karimi/models/gym-experiment-cheetah_vel-35-Env-expert-seed-3-J-2-H-20-349523/prompt_model_cheetah_vel_TRAIN_expert_TEST_expert_iter_4999"
 
         ]
 
