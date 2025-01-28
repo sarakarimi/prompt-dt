@@ -37,7 +37,7 @@ def fix_results():
     runs = api.runs(f"{entity}/{project}")
 
     for run in runs:
-        if run.state == "finished" and "feature-True" in run.name and "J-2-H-20" in run.name and "fix" not in run.name:
+        if run.state == "finished" and "feature-False" in run.name and "J-2-H-20" in run.name and "fix" not in run.name:
 
             print(run.name)
             wandb.init(entity=entity, project=project, name=run.name + "_fixed", reinit=True)
