@@ -1,4 +1,3 @@
-
 import random
 import numpy as np
 import torch
@@ -236,7 +235,6 @@ def select_segments(mab, eval_batch_size, expert_prompt_trajs, traj_idxs, segmen
     if epsilon >= 0.0:
         epsilon -= epsilon_decay
 
-
     s, a, r, d, rtg, timesteps, mask = [], [], [], [], [], [], []
 
     for seg_counter, seg_idx in enumerate(selected_segment_idxs):
@@ -284,6 +282,7 @@ def select_segments(mab, eval_batch_size, expert_prompt_trajs, traj_idxs, segmen
     timesteps = timesteps.reshape(eval_batch_size, n_traj_prompt_segments * traj_prompt_seg_len)
     mask = mask.reshape(eval_batch_size, n_traj_prompt_segments * traj_prompt_seg_len)
     return s, a, rtg, timesteps, mask, selected_segment_idxs, epsilon
+
 
 def rollout_bandit(env, model, max_test_ep_len, rtg_target, rtg_scale, act_dim, state_dim, device,
                    traj_prompt_timesteps, traj_prompt_states, traj_prompt_actions, traj_prompt_rtgs,
@@ -407,11 +406,13 @@ def prompt_tuning_bandit(model, prompt_trajectory, env, info, variant, env_name,
                                                                                     eval_batch_size,
                                                                                     bandit_use_transformer_features,
                                                                                     bandit_feature_dim)
-    # bandit select segments
     for rollout_idx in range(num_rollouts):
+
+        # bandit select segments
         traj_prompt_states, traj_prompt_actions, traj_prompt_rtgs, traj_prompt_timesteps, traj_prompt_masks, selected_segment_idxs, epsilon = select_segments(
             mab, eval_batch_size, prompt_trajectory, traj_idxs, segments_raw, segments_features, segment_idx, epsilon,
-            epsilon_decay, state_dim, act_dim, device, traj_prompt_j, traj_prompt_h, bandit_use_transformer_features, info, variant)
+            epsilon_decay, state_dim, act_dim, device, traj_prompt_j, traj_prompt_h, bandit_use_transformer_features,
+            info, variant)
 
         # rollout bandit selected prompts and select the best arm
         prompt_state_segments, ret = rollout_bandit(env, model, max_test_ep_len, rtg_target,
@@ -426,7 +427,8 @@ def prompt_tuning_bandit(model, prompt_trajectory, env, info, variant, env_name,
         print("mab results", ret)
 
         # update MAB
-        train_losses = update_mab(mab, ret, selected_segment_idxs, segments_raw, segments_features, bandit_use_transformer_features)
+        train_losses = update_mab(mab, ret, selected_segment_idxs, segments_raw, segments_features,
+                                  bandit_use_transformer_features)
 
         if train_losses is not None:
             logs[f'training/{env_name}_train_loss_mean'] = np.mean(train_losses)
